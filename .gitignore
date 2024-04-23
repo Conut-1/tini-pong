@@ -1,5 +1,11 @@
-node_modules/
-.flake8
+# Common Ignore
 .env
-__pycache__/
 .DS_Store
+.vscode
+
+# Frontend Ignore
+node_modules/
+
+# Backend Ignore
+.flake8
+__pycache__/
