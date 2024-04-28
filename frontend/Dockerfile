@@ -1,8 +1,7 @@
 FROM nginx
 
 RUN apt-get update && \
-    apt-get install -y openssl && \
-    apt-get install npm -y 
+    apt-get install -y openssl npm
 
 COPY ./conf/default.conf /etc/nginx/conf.d/default.conf
 COPY tools/entrypoint.sh /entrypoint.sh
