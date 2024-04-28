@@ -1,7 +1,7 @@
 import AbstractComponent from "./AbstractComponent.js";
-import FetchModule from "../utils/fetchmodule.js";
 import DefenseXss from "../utils/defenseXss.js";
 import { BACKEND_URL, navigateTo } from "../index.js";
+import { fetch_get, fetch_post } from "../utils/fetch.js";
 
 const fileForm = /image\/(jpg|jpeg|png|gif)$/;
 const maxFileSize = 2 * 1024 * 1024;
@@ -52,13 +52,7 @@ export default class extends AbstractComponent {
 
     const profileSetting = async () => {
       try {
-        const fetchModule = new FetchModule();
-        const response = await fetchModule.request(
-          new Request(`${BACKEND_URL}/user/profile`, {
-            method: "GET",
-            credentials: "include",
-          })
-        );
+        const response = await fetch_get(`${BACKEND_URL}/user/profile`);
         if (response.ok) {
           const data = await response.json();
           nicknameForm.value = data.nickname;
@@ -138,21 +132,16 @@ export default class extends AbstractComponent {
     editPageSubmit.addEventListener("click", async (e) => {
       if (validNick === false) return;
       try {
-        const fetchModule = new FetchModule();
-        const response = await fetchModule.request(
-          new Request(`${BACKEND_URL}/user/edit/`, {
-            method: "POST",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              nickname: nicknameForm.value,
-              avatar: avatarPreview.src,
-              message: messageForm.value,
-            }),
-          })
-        );
+        const response = await fetch_post(`${BACKEND_URL}/user/edit/`, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            nickname: nicknameForm.value,
+            avatar: avatarPreview.src,
+            message: messageForm.value,
+          }),
+        });
         if (response.ok) {
           alert("저장되었습니다.");
           navigateTo("/");

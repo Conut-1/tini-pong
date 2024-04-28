@@ -1,11 +1,11 @@
 import AbstractComponent from "./AbstractComponent.js";
-import FetchModule from "../utils/fetchmodule.js";
 import {
   BACKEND_URL,
   DOMAIN_NAME,
   OAUTH_CLIENT,
   navigateTo,
 } from "../index.js";
+import { fetch_post } from "../utils/fetch.js";
 
 export default class extends AbstractComponent {
   constructor() {
@@ -38,13 +38,7 @@ export default class extends AbstractComponent {
     const loginBtn = appNode.querySelector(".btn");
     loginBtn.addEventListener("click", async (event) => {
       try {
-        const fetchModule = new FetchModule();
-        const response = await fetchModule.request(
-          new Request(`${BACKEND_URL}/user/status-update/`, {
-            method: "POST",
-            credentials: "include",
-          })
-        );
+        const response = await fetch_post(`${BACKEND_URL}/user/status-update/`);
         if (response.ok) navigateTo("/");
         else throw new Error(response.statusText);
       } catch (error) {

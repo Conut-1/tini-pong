@@ -1,6 +1,6 @@
 import AbstractComponent from "./AbstractComponent.js";
-import FetchModule from "../utils/fetchmodule.js";
 import { BACKEND_URL, navigateTo } from "../index.js";
+import { fetch_post } from "../utils/fetch.js";
 
 const regex = /^[0-9]+$/;
 const regex2 = /^[0-9]$/;
@@ -73,19 +73,14 @@ export default class extends AbstractComponent {
           }
         });
 
-        const fetchModule = new FetchModule();
-        const response = await fetchModule.request(
-          new Request(`${BACKEND_URL}/auth/otp/`, {
-            method: "POST",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              otp_code: otpNum,
-            }),
-          })
-        );
+        const response = await fetch_post(`${BACKEND_URL}/auth/otp/`, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            otp_code: otpNum,
+          }),
+        });
         if (response.ok) {
           const data = await response.json();
           localStorage.setItem("refresh_token", data.refresh_token);

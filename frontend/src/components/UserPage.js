@@ -1,6 +1,6 @@
 import AbstractComponent from "./AbstractComponent.js";
-import FetchModule from "../utils/fetchmodule.js";
 import { BACKEND_URL } from "../index.js";
+import { fetch_get } from "../utils/fetch.js";
 
 export default class extends AbstractComponent {
   constructor() {
@@ -71,12 +71,8 @@ export default class extends AbstractComponent {
 					`
           );
         }
-        const fetchModule = new FetchModule();
-        const response = await fetchModule.request(
-          new Request(`${BACKEND_URL}/user/profile${fetchString}`, {
-            method: "GET",
-            credentials: "include",
-          })
+        const response = await fetch_get(
+          `${BACKEND_URL}/user/profile${fetchString}`
         );
         if (response.ok) {
           const data = await response.json();

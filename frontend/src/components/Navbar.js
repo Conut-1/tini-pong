@@ -1,6 +1,6 @@
 import AbstractComponent from "./AbstractComponent.js";
-import FetchModule from "../utils/fetchmodule.js";
 import { BACKEND_URL } from "../index.js";
+import { fetch_get, fetch_post, fetch_delete } from "../utils/fetch.js";
 
 let friends = [];
 
@@ -73,19 +73,14 @@ export default class extends AbstractComponent {
   handleRoute() {
     const fetchRemoveFriend = async (removeFriend) => {
       try {
-        const fetchModule = new FetchModule();
-        const response = await fetchModule.request(
-          new Request(`${BACKEND_URL}/friend/delete`, {
-            method: "DELETE",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              target_uuid: removeFriend.uuid,
-            }),
-          })
-        );
+        const response = await fetch_delete(`${BACKEND_URL}/friend/delete`, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            target_uuid: removeFriend.uuid,
+          }),
+        });
         if (!response.ok) {
           throw new Error(response.statusText);
         } else if (response.status === 204) {
@@ -98,19 +93,14 @@ export default class extends AbstractComponent {
 
     const fetchAddFriend = async (data, resultSearchUser) => {
       try {
-        const fetchModule = new FetchModule();
-        const response = await fetchModule.request(
-          new Request(`${BACKEND_URL}/friend/add/`, {
-            method: "POST",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              target_uuid: data.uuid,
-            }),
-          })
-        );
+        const response = await fetch_post(`${BACKEND_URL}/friend/add/`, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            target_uuid: data.uuid,
+          }),
+        });
         if (response.ok) {
           friends.push(data);
           addFriendList(data);
@@ -146,13 +136,7 @@ export default class extends AbstractComponent {
 
     const fetchFriendList = async () => {
       try {
-        const fetchModule = new FetchModule();
-        const response = await fetchModule.request(
-          new Request(`${BACKEND_URL}/friend/`, {
-            method: "GET",
-            credentials: "include",
-          })
-        );
+        const response = await fetch_get(`${BACKEND_URL}/friend/`);
         if (response.ok) {
           const data = await response.json();
           friends = data;
@@ -167,12 +151,8 @@ export default class extends AbstractComponent {
 
     const fetchSearchFriend = async (foundUser, resultSearchUser) => {
       try {
-        const fetchModule = new FetchModule();
-        const response = await fetchModule.request(
-          new Request(`${BACKEND_URL}/friend/search?nickname=${foundUser}`, {
-            method: "GET",
-            credentials: "include",
-          })
+        const response = await fetch_get(
+          `${BACKEND_URL}/friend/search?nickname=${foundUser}`
         );
         if (response.ok) {
           const data = await response.json();

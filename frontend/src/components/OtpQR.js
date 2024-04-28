@@ -1,7 +1,7 @@
 import AbstractComponent from "./AbstractComponent.js";
-import FetchModule from "../utils/fetchmodule.js";
 import { QRCode } from "../utils/qrcode.js";
 import { BACKEND_URL } from "../index.js";
+import { fetch_get } from "../utils/fetch.js";
 
 export default class extends AbstractComponent {
   constructor() {
@@ -26,13 +26,7 @@ export default class extends AbstractComponent {
   handleRoute() {
     const loadQRcode = async () => {
       try {
-        const fetchModule = new FetchModule();
-        const response = await fetchModule.request(
-          new Request(`${BACKEND_URL}/auth/otp/`, {
-            method: "GET",
-            credentials: "include",
-          })
-        );
+        const response = await fetch_get(`${BACKEND_URL}/auth/otp/`);
         if (response.ok) {
           const data = await response.json();
           const qrcode = new QRCode(

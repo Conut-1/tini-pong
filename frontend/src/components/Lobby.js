@@ -1,7 +1,7 @@
 import AbstractComponent from "./AbstractComponent.js";
-import FetchModule from "../utils/fetchmodule.js";
 import DefenseXss from "../utils/defenseXss.js";
 import { BACKEND_URL, navigateTo } from "../index.js";
+import { fetch_get, fetch_post } from "../utils/fetch.js";
 
 import {
   onlineContainerEventKeyUp,
@@ -131,13 +131,7 @@ export default class extends AbstractComponent {
 
     (async function () {
       try {
-        const fetchModule = new FetchModule();
-        const response = await fetchModule.request(
-          new Request(`${BACKEND_URL}/room/list/`, {
-            method: "GET",
-            credentials: "include",
-          })
-        );
+        const response = await fetch_get(`${BACKEND_URL}/room/list/`);
         if (response.ok) {
           const data = await response.json();
           data.rooms.forEach((gameRoomData) => {
@@ -217,19 +211,14 @@ export default class extends AbstractComponent {
         if (roomuuid && roomuuid[1]) {
           (async function () {
             try {
-              const fetchModule = new FetchModule();
-              const response = await fetchModule.request(
-                new Request(`${BACKEND_URL}/room/join/`, {
-                  method: "POST",
-                  credentials: "include",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    room_uuid: roomuuid[1],
-                  }),
-                })
-              );
+              const response = await fetch_post(`${BACKEND_URL}/room/join/`, {
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  room_uuid: roomuuid[1],
+                }),
+              });
               if (response.ok) {
                 navigateTo(`room/${roomuuid[1]}`);
               } else if (response.status === 404) {
@@ -251,25 +240,20 @@ export default class extends AbstractComponent {
       );
       (async function () {
         try {
-          const fetchModule = new FetchModule();
-          const response = await fetchModule.request(
-            new Request(`${BACKEND_URL}/room/create/`, {
-              method: "POST",
-              credentials: "include",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                name: openGameRoomModalBody.querySelector("#title-name").value,
-                type: openGameRoomModalBody.querySelector(
-                  "input[name='flexRadioMode']:checked"
-                ).value,
-                difficulty: openGameRoomModalBody.querySelector(
-                  "input[name='flexRadioHC']:checked"
-                ).value,
-              }),
-            })
-          );
+          const response = await fetch_post(`${BACKEND_URL}/room/create/`, {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: openGameRoomModalBody.querySelector("#title-name").value,
+              type: openGameRoomModalBody.querySelector(
+                "input[name='flexRadioMode']:checked"
+              ).value,
+              difficulty: openGameRoomModalBody.querySelector(
+                "input[name='flexRadioHC']:checked"
+              ).value,
+            }),
+          });
           if (response.ok) {
             const data = await response.json();
             navigateTo(`room/` + data.room_uuid);
