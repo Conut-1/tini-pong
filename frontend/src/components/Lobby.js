@@ -1,20 +1,29 @@
 import AbstractComponent from "./AbstractComponent.js";
-import FetchModule from "../utils/fetchmodule.js";
 import DefenseXss from "../utils/defenseXss.js";
-import {BACKEND_URL, navigateTo} from "../index.js";
+import { BACKEND_URL, navigateTo } from "../index.js";
+import { fetch_get, fetch_post } from "../utils/fetch.js";
 
-import {onlineContainerEventKeyUp, onlineContainerEventKeyDown} from "../games/onlinePongBasic.js"
-import {onlineContainerEventKeyUp as onlineContainerEventKeyUpM, onlineContainerEventKeyDown as onlineContainerEventKeyDownM} from "../games/onlinePongMultiple.js"
-import {onlineContainerEventKeyUp as onlineContainerEventKeyUpT, onlineContainerEventKeyDown as onlineContainerEventKeyDownT} from "../games/onlinePongTournament.js"
+import {
+  onlineContainerEventKeyUp,
+  onlineContainerEventKeyDown,
+} from "../games/onlinePongBasic.js";
+import {
+  onlineContainerEventKeyUp as onlineContainerEventKeyUpM,
+  onlineContainerEventKeyDown as onlineContainerEventKeyDownM,
+} from "../games/onlinePongMultiple.js";
+import {
+  onlineContainerEventKeyUp as onlineContainerEventKeyUpT,
+  onlineContainerEventKeyDown as onlineContainerEventKeyDownT,
+} from "../games/onlinePongTournament.js";
 
 export default class extends AbstractComponent {
-	constructor() {
-		super();
-		this.setTitle("Lobby");
-	}
+  constructor() {
+    super();
+    this.setTitle("Lobby");
+  }
 
-	async getHtml() {
-		return `
+  async getHtml() {
+    return `
 		<div class="modal fade" id="openGameRoomModal" tabindex="-1" aria-labelledby="openGameRoomModalLabel" aria-hidden="true">
 			<div class="modal-dialog">
 				<div class="modal-content">
@@ -112,163 +121,154 @@ export default class extends AbstractComponent {
 			</div>
 		</div>
 		`;
-	}
+  }
 
-	reloadGameRoomList() {
-		const gameRoomList = document.querySelector('#gameroom-list');
-		const gameRoomContent = document.querySelector('#gameroom-content');
-		gameRoomList.replaceChildren();
-		gameRoomContent.replaceChildren();
+  reloadGameRoomList() {
+    const gameRoomList = document.querySelector("#gameroom-list");
+    const gameRoomContent = document.querySelector("#gameroom-content");
+    gameRoomList.replaceChildren();
+    gameRoomContent.replaceChildren();
 
-		(async function () {
-			try {
-				const fetchModule = new FetchModule();
-				const response = await fetchModule.request(new Request(`${BACKEND_URL}/room/list/`, {
-					method: 'GET',
-					credentials: "include",
-				}));
-				if (response.ok) {
-					const data = await response.json();
-					data.rooms.forEach(gameRoomData => {
-						const gameRoomID = gameRoomData.uuid;
-						gameRoomList.insertAdjacentHTML("beforeend", `
+    (async function () {
+      try {
+        const response = await fetch_get(`${BACKEND_URL}/room/list/`);
+        if (response.ok) {
+          const data = await response.json();
+          data.rooms.forEach((gameRoomData) => {
+            const gameRoomID = gameRoomData.uuid;
+            gameRoomList.insertAdjacentHTML(
+              "beforeend",
+              `
 						<a class="list-group-item list-group-item-action" id="gameroom-${gameRoomID}-list" data-bs-toggle="list" href="#gameroom-${gameRoomID}" role="tab" aria-controls="gameroom-${gameRoomID}">${gameRoomData.name}</a>
-						`);
+						`
+            );
 
-						let gameRoomType;
-						let gameRoomDifficulty;
-						if (gameRoomData.type === 1)
-							gameRoomType = "1 vs 1";
-						else if (gameRoomData.type === 2)
-							gameRoomType = "2 vs 2";
-						else
-							gameRoomType = "4-player tournament";
-						if (gameRoomData.difficulty === 1)
-							gameRoomDifficulty = "EASY";
-						else if (gameRoomData.difficulty === 2)
-							gameRoomDifficulty = "NORMAL";
-						else
-							gameRoomDifficulty = "HARD";
+            let gameRoomType;
+            let gameRoomDifficulty;
+            if (gameRoomData.type === 1) gameRoomType = "1 vs 1";
+            else if (gameRoomData.type === 2) gameRoomType = "2 vs 2";
+            else gameRoomType = "4-player tournament";
+            if (gameRoomData.difficulty === 1) gameRoomDifficulty = "EASY";
+            else if (gameRoomData.difficulty === 2)
+              gameRoomDifficulty = "NORMAL";
+            else gameRoomDifficulty = "HARD";
 
-
-						gameRoomContent.insertAdjacentHTML("beforeend", `
+            gameRoomContent.insertAdjacentHTML(
+              "beforeend",
+              `
 						<div class="tab-pane fade" id="gameroom-${gameRoomID}" role="tabpanel" aria-labelledby="gameroom-${gameRoomID}-list">
 							<h3>${gameRoomData.name}</h3>
 							<p>Difficulty: ${gameRoomDifficulty}</p>
 							<p>Mode: ${gameRoomType}</p>
 						</div>
-						`);
-					})
-				}
-				else if (response.status === 404)
-					throw new Error(response.error);
-				else
-					throw new Error(response.statusText);
-			} catch (error) {
-				console.log(error.message);
-			}
-		})();
-	}
+						`
+            );
+          });
+        } else if (response.status === 404) throw new Error(response.error);
+        else throw new Error(response.statusText);
+      } catch (error) {
+        console.log(error.message);
+      }
+    })();
+  }
 
-	handleRoute() {
-		this.reloadGameRoomList();
-		
-		const defenseXss = new DefenseXss();
-		const gameRoomTitle = document.querySelector("#title-name");
-		const gameRoomTitleDangerForm = document.querySelector("#gameroom-title-danger");
-		const gameRoomSaveBtn = document.querySelector("#gameroom-save");
-		const gameRoomTitleXss = (value) => {
-			if (value.length < 1) {
-				gameRoomTitleDangerForm.innerText = "방 타이틀은 최소 1글자 이상으로 구성되어야 합니다.";
-				gameRoomSaveBtn.setAttribute("disabled", true);
-			}
-			else {
-				gameRoomTitleDangerForm.innerText = "\u00A0";
-				gameRoomSaveBtn.removeAttribute("disabled");
-			}
-		}
-		gameRoomTitleXss(gameRoomTitle.value);
-		gameRoomTitle.addEventListener("change", e => {
-			gameRoomTitleXss(e.target.value);
-		})
+  handleRoute() {
+    this.reloadGameRoomList();
 
-		const gameRoomListReloadBtn = document.querySelector("#gameroom-list-reload");
-		gameRoomListReloadBtn.addEventListener("click", event => {
-			this.reloadGameRoomList();
-		})
+    const defenseXss = new DefenseXss();
+    const gameRoomTitle = document.querySelector("#title-name");
+    const gameRoomTitleDangerForm = document.querySelector(
+      "#gameroom-title-danger"
+    );
+    const gameRoomSaveBtn = document.querySelector("#gameroom-save");
+    const gameRoomTitleXss = (value) => {
+      if (value.length < 1) {
+        gameRoomTitleDangerForm.innerText =
+          "방 타이틀은 최소 1글자 이상으로 구성되어야 합니다.";
+        gameRoomSaveBtn.setAttribute("disabled", true);
+      } else {
+        gameRoomTitleDangerForm.innerText = "\u00A0";
+        gameRoomSaveBtn.removeAttribute("disabled");
+      }
+    };
+    gameRoomTitleXss(gameRoomTitle.value);
+    gameRoomTitle.addEventListener("change", (e) => {
+      gameRoomTitleXss(e.target.value);
+    });
 
-		const gameRoomEnterBtn = document.querySelector("#gameroom-enter");
-		gameRoomEnterBtn.addEventListener("click", event => {
-			const selectGameRoom = document.querySelector("[aria-selected='true']");
-			if (selectGameRoom) {
-				const roomuuid = selectGameRoom.href.match(/#gameroom-(.*)/);
-				if (roomuuid && roomuuid[1]) {
-					(async function () {
-						try {
-							const fetchModule = new FetchModule();
-							const response = await fetchModule.request(new Request(`${BACKEND_URL}/room/join/`, {
-								method: 'POST',
-								credentials: "include",
-								headers: {
-									"Content-Type": "application/json",
-								},
-								body: JSON.stringify({
-									room_uuid: roomuuid[1],
-								}),
-							}));
-							if (response.ok) {
-								navigateTo(`room/${roomuuid[1]}`);
-							}
-							else if (response.status === 404) {
-								const data = await response.json();
-								throw new Error(data.error);
-							}
-							else
-								throw new Error(response.statusText);
-						} catch (error) {
-							alert(error);
-						}
-					})();
-				}
-			}
-		})
+    const gameRoomListReloadBtn = document.querySelector(
+      "#gameroom-list-reload"
+    );
+    gameRoomListReloadBtn.addEventListener("click", (event) => {
+      this.reloadGameRoomList();
+    });
 
-		gameRoomSaveBtn.addEventListener("click", event => {
-			event.preventDefault();
-			const openGameRoomModalBody = document.querySelector("#openGameRoomModal .modal-body");
-			(async function () {
-				try {
-					const fetchModule = new FetchModule();
-					const response = await fetchModule.request(new Request(`${BACKEND_URL}/room/create/`, {
-						method: 'POST',
-						credentials: "include",
-						headers: {
-							"Content-Type": "application/json",
-						},
-						body: JSON.stringify({
-							name: openGameRoomModalBody.querySelector("#title-name").value,
-							type: openGameRoomModalBody.querySelector("input[name='flexRadioMode']:checked").value,
-							difficulty: openGameRoomModalBody.querySelector("input[name='flexRadioHC']:checked").value,
-						}),
-					}));
-					if (response.ok) {
-						const data = await response.json();
-						navigateTo(`room/` + data.room_uuid);
-					}
-					else if (response.status === 404)
-						throw new Error(response.error);
-					else
-						throw new Error(response.statusText);
-				} catch (error) {
-					console.log(error.message);
-				}
-			})();
-		})
-		document.removeEventListener('keydown', onlineContainerEventKeyDown);
-		document.removeEventListener('keyup', onlineContainerEventKeyUp);
-		document.removeEventListener('keydown', onlineContainerEventKeyDownM);
-		document.removeEventListener('keyup', onlineContainerEventKeyUpM);
-		document.removeEventListener('keydown', onlineContainerEventKeyDownT);
-		document.removeEventListener('keyup', onlineContainerEventKeyUpT);
-	}
+    const gameRoomEnterBtn = document.querySelector("#gameroom-enter");
+    gameRoomEnterBtn.addEventListener("click", (event) => {
+      const selectGameRoom = document.querySelector("[aria-selected='true']");
+      if (selectGameRoom) {
+        const roomuuid = selectGameRoom.href.match(/#gameroom-(.*)/);
+        if (roomuuid && roomuuid[1]) {
+          (async function () {
+            try {
+              const response = await fetch_post(`${BACKEND_URL}/room/join/`, {
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  room_uuid: roomuuid[1],
+                }),
+              });
+              if (response.ok) {
+                navigateTo(`room/${roomuuid[1]}`);
+              } else if (response.status === 404) {
+                const data = await response.json();
+                throw new Error(data.error);
+              } else throw new Error(response.statusText);
+            } catch (error) {
+              alert(error);
+            }
+          })();
+        }
+      }
+    });
+
+    gameRoomSaveBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      const openGameRoomModalBody = document.querySelector(
+        "#openGameRoomModal .modal-body"
+      );
+      (async function () {
+        try {
+          const response = await fetch_post(`${BACKEND_URL}/room/create/`, {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: openGameRoomModalBody.querySelector("#title-name").value,
+              type: openGameRoomModalBody.querySelector(
+                "input[name='flexRadioMode']:checked"
+              ).value,
+              difficulty: openGameRoomModalBody.querySelector(
+                "input[name='flexRadioHC']:checked"
+              ).value,
+            }),
+          });
+          if (response.ok) {
+            const data = await response.json();
+            navigateTo(`room/` + data.room_uuid);
+          } else if (response.status === 404) throw new Error(response.error);
+          else throw new Error(response.statusText);
+        } catch (error) {
+          console.log(error.message);
+        }
+      })();
+    });
+    document.removeEventListener("keydown", onlineContainerEventKeyDown);
+    document.removeEventListener("keyup", onlineContainerEventKeyUp);
+    document.removeEventListener("keydown", onlineContainerEventKeyDownM);
+    document.removeEventListener("keyup", onlineContainerEventKeyUpM);
+    document.removeEventListener("keydown", onlineContainerEventKeyDownT);
+    document.removeEventListener("keyup", onlineContainerEventKeyUpT);
+  }
 }

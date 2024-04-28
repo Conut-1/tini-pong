@@ -1,16 +1,16 @@
 import AbstractComponent from "./AbstractComponent.js";
-import FetchModule from "../utils/fetchmodule.js";
 import { QRCode } from "../utils/qrcode.js";
-import {BACKEND_URL} from "../index.js";
+import { BACKEND_URL } from "../index.js";
+import { fetch_get } from "../utils/fetch.js";
 
 export default class extends AbstractComponent {
-	constructor() {
-		super();
-		this.setTitle("OTP QRcode");
-	}
+  constructor() {
+    super();
+    this.setTitle("OTP QRcode");
+  }
 
-	async getHtml() {
-		return `
+  async getHtml() {
+    return `
 		<h1>OTP 설정</h1>
 		<ul>
 			<li>Play 스토어에서 <b>Google Authenticator</b>를 다운로드합니다.</li>
@@ -21,27 +21,24 @@ export default class extends AbstractComponent {
 		<div id="qrcode"></div>
 		<button class="btn btn-primary" data-href="/login/otp">확인</button>
 		`;
-	}
+  }
 
-	handleRoute() {
-		const loadQRcode = async () => {
-			try {
-				const fetchModule = new FetchModule();
-				const response = await fetchModule.request(new Request(`${BACKEND_URL}/auth/otp/`, {
-					method: 'GET',
-					credentials: "include"
-				}));
-				if (response.ok) {
-					const data = await response.json();
-					const qrcode = new QRCode(document.getElementById("qrcode"), data.otp_uri);
-				}
-				else
-					throw new Error(response.statusText);
-			} catch (error) {
-				alert(error.message);
-			}
-		}
-		
-		loadQRcode();
-	}
+  handleRoute() {
+    const loadQRcode = async () => {
+      try {
+        const response = await fetch_get(`${BACKEND_URL}/auth/otp/`);
+        if (response.ok) {
+          const data = await response.json();
+          const qrcode = new QRCode(
+            document.getElementById("qrcode"),
+            data.otp_uri
+          );
+        } else throw new Error(response.statusText);
+      } catch (error) {
+        alert(error.message);
+      }
+    };
+
+    loadQRcode();
+  }
 }

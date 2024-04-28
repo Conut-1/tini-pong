@@ -1,15 +1,15 @@
 import AbstractComponent from "./AbstractComponent.js";
-import FetchModule from "../utils/fetchmodule.js";
-import {BACKEND_URL} from "../index.js";
+import { BACKEND_URL } from "../index.js";
+import { fetch_get } from "../utils/fetch.js";
 
 export default class extends AbstractComponent {
-	constructor() {
-		super();
-		this.setTitle("UserPage");
-	}
+  constructor() {
+    super();
+    this.setTitle("UserPage");
+  }
 
-	async getHtml() {
-		return `
+  async getHtml() {
+    return `
 		<div class="container-fluid">
 			<div class="row row-cols-1 row-cols-md-2 m-md-3 mt-3">
 				<div class="col col-md-4 p-2" id="userpage-profile">
@@ -54,119 +54,131 @@ export default class extends AbstractComponent {
 			</div>
 		</div>
 		`;
-	}
+  }
 
-	handleRoute(param) {
-		const profileSetting = async () => {
-			try {
-				let fetchString = "";
-				if (param.useruuid)
-					fetchString = `?uuid=${param.useruuid}`;
-				else {
-					document.querySelector("#userpage-edit").insertAdjacentHTML("beforeend", `
+  handleRoute(param) {
+    const profileSetting = async () => {
+      try {
+        let fetchString = "";
+        if (param.useruuid) fetchString = `?uuid=${param.useruuid}`;
+        else {
+          document.querySelector("#userpage-edit").insertAdjacentHTML(
+            "beforeend",
+            `
 					<div class="m-3 text-end">
 						<a class="btn common-radio-btn" href="/edit" data-href="/edit" role="button">edit</a>
 					</div>
-					`);
-				}
-				const fetchModule = new FetchModule();
-				const response = await fetchModule.request(new Request(`${BACKEND_URL}/user/profile${fetchString}`, {
-					method: 'GET',
-					credentials: "include",
-				}));
-				if (response.ok) {
-					const data = await response.json();
-					const userProfileNode = document.querySelector("#userpage-profile")
+					`
+          );
+        }
+        const response = await fetch_get(
+          `${BACKEND_URL}/user/profile${fetchString}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          const userProfileNode = document.querySelector("#userpage-profile");
 
-					userProfileNode.querySelector("#userpage-profile-nickname").innerText = data.nickname;
-					userProfileNode.querySelector("#userpage-profile-idtag").innerText = "#" + data.id_tag;
-					userProfileNode.querySelector("#userpage-profile-message").innerHTML = data.message;
-					if (data.avatar)
-						userProfileNode.querySelector("#userpage-profile-avatar").src = data.avatar;
-					LogSetting(data.game_history, data.uuid);
-				}
-				else
-					throw new Error(response.statusText);
-			} catch (error) {
-				const profileNode = document.querySelector("#app .container-fluid")
-				profileNode.replaceChildren();
-				profileNode.insertAdjacentHTML("beforeend", `
+          userProfileNode.querySelector(
+            "#userpage-profile-nickname"
+          ).innerText = data.nickname;
+          userProfileNode.querySelector("#userpage-profile-idtag").innerText =
+            "#" + data.id_tag;
+          userProfileNode.querySelector("#userpage-profile-message").innerHTML =
+            data.message;
+          if (data.avatar)
+            userProfileNode.querySelector("#userpage-profile-avatar").src =
+              data.avatar;
+          LogSetting(data.game_history, data.uuid);
+        } else throw new Error(response.statusText);
+      } catch (error) {
+        const profileNode = document.querySelector("#app .container-fluid");
+        profileNode.replaceChildren();
+        profileNode.insertAdjacentHTML(
+          "beforeend",
+          `
 				<div class="d-flex justify-content-center align-items-center" style="min-height: 80dvh;">
 					<div>유저가 존재하지 않습니다.</div>
 				</div>
-				`);
-			}
-		}
+				`
+        );
+      }
+    };
 
-		const LogSetting = (game_history, uuid) => {
-			const game1vs1 = [];
-			const game1vs1Result = {
-				win: 0,
-				lose: 0
-			};
-			const game2vs2 = [];
-			const game2vs2Result = {
-				win: 0,
-				lose: 0
-			};
+    const LogSetting = (game_history, uuid) => {
+      const game1vs1 = [];
+      const game1vs1Result = {
+        win: 0,
+        lose: 0,
+      };
+      const game2vs2 = [];
+      const game2vs2Result = {
+        win: 0,
+        lose: 0,
+      };
 
-			game_history.forEach(element => {
-				const node = {};
-				if (element.difficulty === 1)
-					node.difficulty = "EASY";
-				else if (element.difficulty === 2)
-					node.difficulty = "NORMAL";
-				else
-					node.difficulty = "HARD";
-				node.score = element.score;
-				node.time = element.start_time;
-				node.players = element.players;
-				node.players.forEach(e => {
-					e.id_tag = e.uuid.substr(0, 4);
-				})
-				const selfnum = node.players.findIndex(e => {
-					return (e.uuid === uuid);
-				});
-				if (element.type === 1) {
-					if (selfnum + 1 === element.win) {
-						node.result = "승";
-						game1vs1Result.win++;
-					}
-					else {
-						node.result = "패";
-						game1vs1Result.lose++;
-					}
-					game1vs1.unshift(node);
-				} else {
-					if ((element.win === 1 && selfnum <= element.win) || (element.win === 2 && selfnum >= element.win)) {
-						node.result = "승";
-						game2vs2Result.win++;
-					}
-					else {
-						node.result = "패";
-						game2vs2Result.lose++;
-					}
-					game2vs2.unshift(node);
-				}
-			});
+      game_history.forEach((element) => {
+        const node = {};
+        if (element.difficulty === 1) node.difficulty = "EASY";
+        else if (element.difficulty === 2) node.difficulty = "NORMAL";
+        else node.difficulty = "HARD";
+        node.score = element.score;
+        node.time = element.start_time;
+        node.players = element.players;
+        node.players.forEach((e) => {
+          e.id_tag = e.uuid.substr(0, 4);
+        });
+        const selfnum = node.players.findIndex((e) => {
+          return e.uuid === uuid;
+        });
+        if (element.type === 1) {
+          if (selfnum + 1 === element.win) {
+            node.result = "승";
+            game1vs1Result.win++;
+          } else {
+            node.result = "패";
+            game1vs1Result.lose++;
+          }
+          game1vs1.unshift(node);
+        } else {
+          if (
+            (element.win === 1 && selfnum <= element.win) ||
+            (element.win === 2 && selfnum >= element.win)
+          ) {
+            node.result = "승";
+            game2vs2Result.win++;
+          } else {
+            node.result = "패";
+            game2vs2Result.lose++;
+          }
+          game2vs2.unshift(node);
+        }
+      });
 
-			const radioBtn = document.querySelector("#log-btn-group");
-			const logPannel = document.querySelector("#log-pannel");
-			const logSetting1vs1 = () => {
-				logPannel.replaceChildren();
-				game1vs1.forEach(element => {
-					const pannelNode = document.createElement("li");
-					pannelNode.setAttribute("class", "d-flex align-items-center border");
-					if (element.result === "승") {
-						pannelNode.insertAdjacentHTML("beforeend", `
+      const radioBtn = document.querySelector("#log-btn-group");
+      const logPannel = document.querySelector("#log-pannel");
+      const logSetting1vs1 = () => {
+        logPannel.replaceChildren();
+        game1vs1.forEach((element) => {
+          const pannelNode = document.createElement("li");
+          pannelNode.setAttribute("class", "d-flex align-items-center border");
+          if (element.result === "승") {
+            pannelNode.insertAdjacentHTML(
+              "beforeend",
+              `
 						<div class="align-self-stretch bg-primary text-white p-2">승</div>
-						`);
-					} else {
-						pannelNode.insertAdjacentHTML("beforeend", `
+						`
+            );
+          } else {
+            pannelNode.insertAdjacentHTML(
+              "beforeend",
+              `
 						<div class="align-self-stretch bg-danger text-white p-2">패</div>
-						`);
-					}
-					pannelNode.insertAdjacentHTML("beforeend", `
+						`
+            );
+          }
+          pannelNode.insertAdjacentHTML(
+            "beforeend",
+            `
 					<div class="d-inline-flex justify-content-around align-items-center p-2" style="width: 40rem;">
 						<div>
 							<span>
@@ -186,26 +198,35 @@ export default class extends AbstractComponent {
 						<div>${element.time}</div>
 						<div><b>${element.difficulty}</b></div>
 					</div>
-					`);
-					logPannel.appendChild(pannelNode);
-				});
-				progressSetting(game1vs1Result.win, game1vs1Result.lose);
-			}
-			const logSetting2vs2 = () => {
-				logPannel.replaceChildren();
-				game2vs2.forEach(element => {
-					const pannelNode = document.createElement("li");
-					pannelNode.setAttribute("class", "d-flex align-items-center border");
-					if (element.result === "승") {
-						pannelNode.insertAdjacentHTML("beforeend", `
+					`
+          );
+          logPannel.appendChild(pannelNode);
+        });
+        progressSetting(game1vs1Result.win, game1vs1Result.lose);
+      };
+      const logSetting2vs2 = () => {
+        logPannel.replaceChildren();
+        game2vs2.forEach((element) => {
+          const pannelNode = document.createElement("li");
+          pannelNode.setAttribute("class", "d-flex align-items-center border");
+          if (element.result === "승") {
+            pannelNode.insertAdjacentHTML(
+              "beforeend",
+              `
 						<div class="align-self-stretch bg-primary text-white p-2">승</div>
-						`);
-					} else {
-						pannelNode.insertAdjacentHTML("beforeend", `
+						`
+            );
+          } else {
+            pannelNode.insertAdjacentHTML(
+              "beforeend",
+              `
 						<div class="align-self-stretch bg-danger text-white p-2">패</div>
-						`);
-					}
-					pannelNode.insertAdjacentHTML("beforeend", `
+						`
+            );
+          }
+          pannelNode.insertAdjacentHTML(
+            "beforeend",
+            `
 					<div class="d-inline-flex justify-content-around align-items-center p-2" style="width: 40rem;">
 						<div class="d-flex flex-column justify-content-center">
 							<div>
@@ -241,43 +262,44 @@ export default class extends AbstractComponent {
 						<div>${element.time}</div>
 						<div><b>${element.difficulty}</b></div>
 					</div>
-					`);
-					logPannel.appendChild(pannelNode);
-				});
-				progressSetting(game2vs2Result.win, game2vs2Result.lose);
-			}
-			
-			logSetting1vs1();
-			radioBtn.querySelector("#btnradio1").addEventListener("change", e => {
-				if (e.currentTarget.checked) {
-					logSetting1vs1();
-				}
-			})
-			radioBtn.querySelector("#btnradio2").addEventListener("change", e => {
-				if (e.currentTarget.checked) {
-					logSetting2vs2();
-				}
-			})
-		}
+					`
+          );
+          logPannel.appendChild(pannelNode);
+        });
+        progressSetting(game2vs2Result.win, game2vs2Result.lose);
+      };
 
-		const progressSetting = (winNum, loseNum) => {
-			const progressBar = document.querySelector("#winrate-progress");
-			let winRate = 0;
-			if (winNum > 0 || loseNum > 0)
-				winRate = Math.round((winNum / (winNum + loseNum)) * 100);
-			const loseRate = 100 - winRate;
+      logSetting1vs1();
+      radioBtn.querySelector("#btnradio1").addEventListener("change", (e) => {
+        if (e.currentTarget.checked) {
+          logSetting1vs1();
+        }
+      });
+      radioBtn.querySelector("#btnradio2").addEventListener("change", (e) => {
+        if (e.currentTarget.checked) {
+          logSetting2vs2();
+        }
+      });
+    };
 
-			const progressBarWin = progressBar.children[0];
-			progressBarWin.setAttribute("aria-valuenow", `${winRate}`);
-			progressBarWin.setAttribute("style", `width: ${winRate}%`);
-			progressBarWin.children[0].innerText = `${winNum}`;
-			const progressBarLose = progressBar.children[1];
-			progressBarLose.setAttribute("aria-valuenow", `${loseRate}`);
-			progressBarLose.setAttribute("style", `width: ${loseRate}%`);
-			progressBarLose.children[0].innerText = `${loseNum}`;
-			document.querySelector("#rate-progress").innerText = `${winRate}%`;
-		}
+    const progressSetting = (winNum, loseNum) => {
+      const progressBar = document.querySelector("#winrate-progress");
+      let winRate = 0;
+      if (winNum > 0 || loseNum > 0)
+        winRate = Math.round((winNum / (winNum + loseNum)) * 100);
+      const loseRate = 100 - winRate;
 
-		profileSetting();
-	}
+      const progressBarWin = progressBar.children[0];
+      progressBarWin.setAttribute("aria-valuenow", `${winRate}`);
+      progressBarWin.setAttribute("style", `width: ${winRate}%`);
+      progressBarWin.children[0].innerText = `${winNum}`;
+      const progressBarLose = progressBar.children[1];
+      progressBarLose.setAttribute("aria-valuenow", `${loseRate}`);
+      progressBarLose.setAttribute("style", `width: ${loseRate}%`);
+      progressBarLose.children[0].innerText = `${loseNum}`;
+      document.querySelector("#rate-progress").innerText = `${winRate}%`;
+    };
+
+    profileSetting();
+  }
 }
