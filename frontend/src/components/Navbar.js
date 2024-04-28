@@ -1,16 +1,16 @@
 import AbstractComponent from "./AbstractComponent.js";
 import FetchModule from "../utils/fetchmodule.js";
-import {BACKEND_URL} from "../index.js";
+import { BACKEND_URL } from "../index.js";
 
 let friends = [];
 
 export default class extends AbstractComponent {
-	constructor() {
-		super();
-	}
+  constructor() {
+    super();
+  }
 
-	async getHtml() {
-		return `
+  async getHtml() {
+    return `
 		<nav class="navbar navbar-expand-md sticky-top" style="background-color: #4D37C6;">
 			<div class="container-fluid">
 				<div class="navbar-brand">
@@ -68,117 +68,129 @@ export default class extends AbstractComponent {
 			</div>
 		</div>
 		`;
-	}
+  }
 
-	handleRoute() {
-		const fetchRemoveFriend = async (removeFriend) => {
-			try {
-				const fetchModule = new FetchModule();
-				const response = await fetchModule.request(new Request(`${BACKEND_URL}/friend/delete`, {
-					method: 'DELETE',
-					credentials: "include",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						target_uuid: removeFriend.uuid,
-					}),
-				}));
-				if (!response.ok) {
-					throw new Error(response.statusText);
-				}
-				else if (response.status === 204) {
-					throw new Error("Already deleted");
-				}
-			} catch (error) {
-				console.log(error.message);
-			}
-		}
+  handleRoute() {
+    const fetchRemoveFriend = async (removeFriend) => {
+      try {
+        const fetchModule = new FetchModule();
+        const response = await fetchModule.request(
+          new Request(`${BACKEND_URL}/friend/delete`, {
+            method: "DELETE",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              target_uuid: removeFriend.uuid,
+            }),
+          })
+        );
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        } else if (response.status === 204) {
+          throw new Error("Already deleted");
+        }
+      } catch (error) {
+        console.log(error.message);
+      }
+    };
 
-		const fetchAddFriend = async (data, resultSearchUser) => {
-			try {
-				const fetchModule = new FetchModule();
-				const response = await fetchModule.request(new Request(`${BACKEND_URL}/friend/add/`, {
-					method: 'POST',
-					credentials: "include",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						target_uuid: data.uuid,
-					}),
-				}));
-				if (response.ok) {
-					friends.push(data);
-					addFriendList(data);
-				}
-				else if (response.status === 409) {
-					resultSearchUser.insertAdjacentHTML("beforeend", `
+    const fetchAddFriend = async (data, resultSearchUser) => {
+      try {
+        const fetchModule = new FetchModule();
+        const response = await fetchModule.request(
+          new Request(`${BACKEND_URL}/friend/add/`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              target_uuid: data.uuid,
+            }),
+          })
+        );
+        if (response.ok) {
+          friends.push(data);
+          addFriendList(data);
+        } else if (response.status === 409) {
+          resultSearchUser.insertAdjacentHTML(
+            "beforeend",
+            `
 					<div class="alert alert-danger d-flex align-items-center" role="alert" id="friend-search-alert">
 						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16" role="img" aria-label="Warning:">
 							<path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
 						</svg>
 						<div>이미 친구입니다.</div>
 					</div>
-					`);
-				}
-				else if (response.status === 400) {
-					resultSearchUser.insertAdjacentHTML("beforeend", `
+					`
+          );
+        } else if (response.status === 400) {
+          resultSearchUser.insertAdjacentHTML(
+            "beforeend",
+            `
 					<div class="alert alert-primary d-flex align-items-center" role="alert" id="friend-search-alert">
 						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16" role="img" aria-label="Warning:">
 							<path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
 						</svg>
 						<div>자기 자신은 추가할 수 없습니다.</div>
 					</div>
-					`);
-				}
-				else
-					throw new Error(response.statusText);
-			} catch (error) {
-				console.log(error.message);
-			}
-		}
+					`
+          );
+        } else throw new Error(response.statusText);
+      } catch (error) {
+        console.log(error.message);
+      }
+    };
 
-		const fetchFriendList = async () => {
-			try {
-				const fetchModule = new FetchModule();
-				const response = await fetchModule.request(new Request(`${BACKEND_URL}/friend/`, {
-					method: 'GET',
-					credentials: "include",
-				}));
-				if (response.ok) {
-					const data = await response.json();
-					friends = data;
-					friends.forEach(element => {
-						addFriendList(element);
-					})
-				}
-				else
-					throw new Error(response.statusText);
-			} catch (error) {
-				console.log(error.message);
-			}
-		}
+    const fetchFriendList = async () => {
+      try {
+        const fetchModule = new FetchModule();
+        const response = await fetchModule.request(
+          new Request(`${BACKEND_URL}/friend/`, {
+            method: "GET",
+            credentials: "include",
+          })
+        );
+        if (response.ok) {
+          const data = await response.json();
+          friends = data;
+          friends.forEach((element) => {
+            addFriendList(element);
+          });
+        } else throw new Error(response.statusText);
+      } catch (error) {
+        console.log(error.message);
+      }
+    };
 
-		const fetchSearchFriend = async (foundUser, resultSearchUser) => {
-			try {
-				const fetchModule = new FetchModule();
-				const response = await fetchModule.request(new Request(`${BACKEND_URL}/friend/search?nickname=${foundUser}`, {
-					method: 'GET',
-					credentials: "include",
-				}));
-				if (response.ok) {
-					const data = await response.json();
+    const fetchSearchFriend = async (foundUser, resultSearchUser) => {
+      try {
+        const fetchModule = new FetchModule();
+        const response = await fetchModule.request(
+          new Request(`${BACKEND_URL}/friend/search?nickname=${foundUser}`, {
+            method: "GET",
+            credentials: "include",
+          })
+        );
+        if (response.ok) {
+          const data = await response.json();
 
-					if (data.length !== 0) {
-						resultSearchUser.insertAdjacentHTML("beforeend", `
+          if (data.length !== 0) {
+            resultSearchUser.insertAdjacentHTML(
+              "beforeend",
+              `
 						<ul class="list-group row px-3 py-3">
 						</ul>
-						`);
-						data.forEach(element => {
-							const searchUserListNode = document.createElement("li");
-							searchUserListNode.setAttribute("class", "list-group-item");
-							searchUserListNode.insertAdjacentHTML("beforeend", `
+						`
+            );
+            data.forEach((element) => {
+              const searchUserListNode = document.createElement("li");
+              searchUserListNode.setAttribute("class", "list-group-item");
+              searchUserListNode.insertAdjacentHTML(
+                "beforeend",
+                `
 							<div class="d-flex align-items-center flex-wrap">
 								<div class="p-2">
 									<a href="/users/${element.uuid}" data-href="/users/${element.uuid}" class="link-offset-2 link-underline link-underline-opacity-0 link-dark">${element.nickname}</a>
@@ -195,51 +207,57 @@ export default class extends AbstractComponent {
 									</button>
 								</div>
 							</div>
-							`);
-							resultSearchUser.querySelector(".list-group").appendChild(searchUserListNode);
+							`
+              );
+              resultSearchUser
+                .querySelector(".list-group")
+                .appendChild(searchUserListNode);
 
-							const resultItemBtn = searchUserListNode.querySelector("button");
-							resultItemBtn.addEventListener("click", async event => {
-								const searchAlert = resultSearchUser.querySelector("#friend-search-alert");
-								if (searchAlert)
-									searchAlert.remove();
-								fetchAddFriend(element, resultSearchUser);
-							})
-						});
-					}
-					else { // 유저가 없는 경우
-						resultSearchUser.insertAdjacentHTML("beforeend", `
+              const resultItemBtn = searchUserListNode.querySelector("button");
+              resultItemBtn.addEventListener("click", async (event) => {
+                const searchAlert = resultSearchUser.querySelector(
+                  "#friend-search-alert"
+                );
+                if (searchAlert) searchAlert.remove();
+                fetchAddFriend(element, resultSearchUser);
+              });
+            });
+          } else {
+            // 유저가 없는 경우
+            resultSearchUser.insertAdjacentHTML(
+              "beforeend",
+              `
 						<div class="alert alert-danger d-flex align-items-center" role="alert" id="friend-search-alert">
 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16" role="img" aria-label="Warning:">
 								<path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
 							</svg>
 							<div>유저가 없습니다.</div>
 						</div>
-						`);
-					}
-				}
-				else
-					throw new Error(response.statusText);
-			} catch (error) {
-				console.log(error.message);
-			}
-		}
+						`
+            );
+          }
+        } else throw new Error(response.statusText);
+      } catch (error) {
+        console.log(error.message);
+      }
+    };
 
-		const addFriendList = (element) => {
-			const newFriendListNode = document.createElement("li");
-			newFriendListNode.setAttribute("class", "list-group-item");
+    const addFriendList = (element) => {
+      const newFriendListNode = document.createElement("li");
+      newFriendListNode.setAttribute("class", "list-group-item");
 
-			const newStatusNode = document.createElement("span");
-			if (element.status === true) {
-				newStatusNode.setAttribute("class", "badge bg-success rounded-pill");
-				newStatusNode.innerText = "online";
-			}
-			else {
-				newStatusNode.setAttribute("class", "badge bg-secondary rounded-pill");
-				newStatusNode.innerText = "offline";
-			}
+      const newStatusNode = document.createElement("span");
+      if (element.status === true) {
+        newStatusNode.setAttribute("class", "badge bg-success rounded-pill");
+        newStatusNode.innerText = "online";
+      } else {
+        newStatusNode.setAttribute("class", "badge bg-secondary rounded-pill");
+        newStatusNode.innerText = "offline";
+      }
 
-			newFriendListNode.insertAdjacentHTML("beforeend", `
+      newFriendListNode.insertAdjacentHTML(
+        "beforeend",
+        `
 			<div class="d-flex flex-wrap align-items-center">
 				<div class="p-2 me-auto">
 					<img src=${element.avatar} width="40px" height="40px" style="border-radius: 20%;"/>
@@ -255,33 +273,46 @@ export default class extends AbstractComponent {
 					</button>
 				</div>
 			</div>
-			`);
-			newFriendListNode.querySelector("#online-status").appendChild(newStatusNode);
-			document.querySelector("#friend-list").appendChild(newFriendListNode);
+			`
+      );
+      newFriendListNode
+        .querySelector("#online-status")
+        .appendChild(newStatusNode);
+      document.querySelector("#friend-list").appendChild(newFriendListNode);
 
-			newFriendListNode.querySelector("button").addEventListener("click", event => {
-				const removeFriend = friends.find(element => element.uuid === newFriendListNode.querySelector("a").getAttribute('data-value'));
-				newFriendListNode.remove();
-				fetchRemoveFriend(removeFriend);
-			})
-		}
+      newFriendListNode
+        .querySelector("button")
+        .addEventListener("click", (event) => {
+          const removeFriend = friends.find(
+            (element) =>
+              element.uuid ===
+              newFriendListNode.querySelector("a").getAttribute("data-value")
+          );
+          newFriendListNode.remove();
+          fetchRemoveFriend(removeFriend);
+        });
+    };
 
-		const friendList = document.querySelector("#friend-list");
-		friendList.replaceChildren();
-		fetchFriendList();
+    const friendList = document.querySelector("#friend-list");
+    friendList.replaceChildren();
+    fetchFriendList();
 
-		const offcanvasSearchUserBtn = document.querySelector("#button-offcanvasSearchUser");
-		offcanvasSearchUserBtn.addEventListener("click", event => {
-			const foundUser = document.querySelector("input[aria-describedby='button-offcanvasSearchUser']").value;
-			const resultSearchUser = document.querySelector("#resultSearchUser");
-			resultSearchUser.replaceChildren();
-			fetchSearchFriend(foundUser, resultSearchUser);
-		})
+    const offcanvasSearchUserBtn = document.querySelector(
+      "#button-offcanvasSearchUser"
+    );
+    offcanvasSearchUserBtn.addEventListener("click", (event) => {
+      const foundUser = document.querySelector(
+        "input[aria-describedby='button-offcanvasSearchUser']"
+      ).value;
+      const resultSearchUser = document.querySelector("#resultSearchUser");
+      resultSearchUser.replaceChildren();
+      fetchSearchFriend(foundUser, resultSearchUser);
+    });
 
-		const friendListReload = document.querySelector("#friend-list-reload");
-		friendListReload.addEventListener("click", event => {
-			friendList.replaceChildren();
-			fetchFriendList();
-		})
-	}
+    const friendListReload = document.querySelector("#friend-list-reload");
+    friendListReload.addEventListener("click", (event) => {
+      friendList.replaceChildren();
+      fetchFriendList();
+    });
+  }
 }
